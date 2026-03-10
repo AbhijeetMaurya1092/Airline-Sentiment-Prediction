@@ -29,11 +29,14 @@ def predict_knn(input_data: InputData):
     input_df = standard_scaler.transform(input_df) # scale the input data using the pre-trained standard scaler
     prediction = knn_model.predict(input_df) # make a prediction using the pre-trained KNN model
     return {
-    "model": "knn_classification",
-    "prediction": "neutral" if prediction == 0 
-                  else "positive" if prediction == 2 
-                  else "negative"
+    "knn_classification": {
+        "model": "knn_classification",
+        "prediction": "neutral" if prediction[0] == 1
+                    else "positive" if prediction[0] == 2
+                    else "negative"
+    }
 }  # return the prediction as a JSON response
+    
 
 @app.post("/logistic_model") # define a POST endpoint for making predictions
 def predict_logistic(input_data: InputData):
@@ -46,6 +49,13 @@ def predict_logistic(input_data: InputData):
         input_data.user_timezone
     ]]
     input_df = standard_scaler.transform(input_df) # scale the input data using the pre-trained standard scaler
-    prediction = logistic_model.predict(input_df) # make a prediction using the pre-trained logistic regression model
-    return {"prediction": int(prediction[0])} # return the prediction as a JSON response
+    prediction = logistic_model.predict(input_df)# make a prediction using the pre-trained logistic regression model
+    return {
+    "Logistic _regression": {
+        "model": "Logistic_regression",
+        "prediction": "neutral" if prediction[0] == 1
+                    else "positive" if prediction[0] == 2
+                    else "negative"
+    } 
+    }# return the prediction as a JSON response
 

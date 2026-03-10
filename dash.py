@@ -1,97 +1,64 @@
-import requests
 import streamlit as st
+import requests
 
-st.set_page_config(page_title="Airline Sentiment Predictor", page_icon=":airplane:", layout="wide")
+# Set your FastAPI backend URL here
+API_URL = "http://127.0.0.1:8000"
 
-st.title("Airline Sentiment Predictor")
-st.caption("Interactive frontend for your FastAPI sentiment models")
+st.set_page_config(page_title="Airline Sentiment Predictor", page_icon="✈️", layout="centered")
 
-with st.sidebar:
-    st.header("API Settings")
-    base_url = st.text_input("FastAPI Base URL", value="http://127.0.0.1:8000")
-    model_choice = st.selectbox(
-        "Choose Model",
-        options=["KNN Classifier", "Logistic Regression"],
-        index=0,
-    )
+st.title("✈️ Airline Sentiment Predictor")
+st.markdown("Enter the tweet and user details to predict the sentiment.")
 
-    endpoint = "/knn_model" if model_choice == "KNN Classifier" else "/logistic_model"
-    st.markdown(f"**Endpoint:** `{endpoint}`")
+# Model Selection
+model_choice = st.radio("Choose Prediction Model:", ("KNN Classifier", "Logistic Regression"))
 
 st.subheader("Input Features")
 
-col1, col2, col3 = st.columns(3)
+# Create two columns for better layout
+col1, col2 = st.columns(2)
 
 with col1:
-    airline_sentiment_confidence = st.number_input(
-        "airline_sentiment_confidence",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.8,
-        step=0.01,
-        format="%.2f",
-    )
-    negativereason = st.number_input("negativereason (encoded int)", min_value=0, value=0, step=1)
+    airline_sentiment_confidence = st.number_input("Airline Sentiment Confidence", min_value=0.0, max_value=1.0, value=0.8, step=0.01)
+    negativereason = st.number_input("Negative Reason (Encoded Integer)", value=0, step=1)
+    negativereason_confidence = st.number_input("Negative Reason Confidence", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
 
 with col2:
-    negativereason_confidence = st.number_input(
-        "negativereason_confidence",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.8,
-        step=0.01,
-        format="%.2f",
-    )
-    airline = st.number_input("airline (encoded int)", min_value=0, value=0, step=1)
+    airline = st.number_input("Airline (Encoded Integer)", value=1, step=1)
+    retweet_count = st.number_input("Retweet Count", min_value=0, value=0, step=1)
+    user_timezone = st.number_input("User Timezone (Encoded Integer)", value=0, step=1)
 
-with col3:
-    retweet_count = st.number_input("retweet_count", min_value=0, value=0, step=1)
-    user_timezone = st.number_input("user_timezone (encoded int)", value=0, step=1)
-
-payload = {
-    "airline_sentiment_confidence": float(airline_sentiment_confidence),
-    "negativereason": int(negativereason),
-    "negativereason_confidence": float(negativereason_confidence),
-    "airline": int(airline),
-    "retweet_count": int(retweet_count),
-    "user_timezone": int(user_timezone),
-}
-
-if st.button("Predict", type="primary", use_container_width=True):
-    url = f"{base_url.rstrip('/')}{endpoint}"
-
+# Predict Button
+if st.button("Predict Sentiment", type="primary"):
+    # Map input data to the Pydantic model structure
+    payload = {
+        "airline_sentiment_confidence": airline_sentiment_confidence,
+        "negativereason": negativereason,
+        "negativereason_confidence": negativereason_confidence,
+        "airline": airline,
+        "retweet_count": retweet_count,
+        "user_timezone": user_timezone
+    }
+    
+    # Select endpoint based on user choice
+    endpoint = "/knn_model" if model_choice == "KNN Classifier" else "/logistic_model"
+    
     try:
-        with st.spinner("Requesting prediction from API..."):
-            response = requests.post(url, json=payload, timeout=15)
-
-        if response.status_code != 200:
-            st.error(f"API error {response.status_code}: {response.text}")
-        else:
+        with st.spinner('Calling API...'):
+            response = requests.post(f"{API_URL}{endpoint}", json=payload)
+            response.raise_for_status() # Check for HTTP errors
+            
             data = response.json()
-            st.success("Prediction received")
-
-            if endpoint == "/logistic_model":
-                label_map = {0: "neutral", 1: "negative", 2: "positive"}
-                pred_num = data.get("prediction")
-                pred_label = label_map.get(pred_num, f"unknown ({pred_num})")
-
-                c1, c2 = st.columns(2)
-                c1.metric("Predicted Class (int)", pred_num)
-                c2.metric("Predicted Sentiment", pred_label)
+            
+            # Extract result based on the API response structure
+            if model_choice == "KNN Classifier":
+                result = data.get("knn_classification", {}).get("prediction", "Unknown")
             else:
-                st.metric("Predicted Sentiment", data.get("prediction", "N/A"))
+                result = data.get("Logistic _regression", {}).get("prediction", "Unknown")
+                
+            st.success(f"**Predicted Sentiment:** {result.upper()}")
+            st.json(data) # Show the raw JSON response for debugging
 
-            with st.expander("Request/Response Debug"):
-                st.write("Request payload:")
-                st.json(payload)
-                st.write("Response JSON:")
-                st.json(data)
-
-    except requests.exceptions.RequestException as exc:
-        st.error(f"Could not connect to API at {url}")
-        st.exception(exc)
-
-st.markdown("---")
-st.markdown(
-    "Run backend first, then run this app. If API runs on another host/port, update it in sidebar."
-)
+    except requests.exceptions.ConnectionError:
+        st.error("Failed to connect to the API. Is your FastAPI server running on http://127.0.0.1:8000 ?")
+    except Exception as e:
+        st.error(f"An error occurred: {e}")

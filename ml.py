@@ -35,36 +35,37 @@ x=df.drop(columns=[
 
 y=df["airline_sentiment"]
 
-x_train,x_test,y_train,y_test=train_test_split(x,y,random_state=42, test_size=0.2)
+# x_train,x_test,y_train,y_test=train_test_split(x,y,random_state=42, test_size=0.2)
 
-#Logistic regression
-log_regg= LogisticRegression(max_iter=200)
-log_regg.fit(x_train,y_train)
-print("Logistic regression model trained")
+# #Logistic regression
+# log_regg= LogisticRegression(max_iter=200)
+# log_regg.fit(x_train,y_train)
+# print("Logistic regression model trained")
 
-#KNN model
-knn=KNeighborsClassifier(n_neighbors=5)
-knn.fit(x_train,y_train)
-print("KNN classifier model trained")
+# #KNN model
+# knn=KNeighborsClassifier(n_neighbors=5)
+# knn.fit(x_train,y_train)
+# print("KNN classifier model trained")
 
-log_predict = log_regg.predict(x_test)
-knn_predict = knn.predict(x_test)
-print("Prediction of logistic regression and KNN classification is done!")
+# log_predict = log_regg.predict(x_test)
+# knn_predict = knn.predict(x_test)
+# print("Prediction of logistic regression and KNN classification is done!")
 
-#Evaluate the models
-log_reg_confusion = confusion_matrix(y_test,log_predict)
-log_class_report = classification_report(y_test,log_predict)
-log_accuracy = accuracy_score(y_test,log_predict)
-print(f" logistic regression confusion matric: {log_reg_confusion}\n classification report: {log_class_report}\n accuracy: {log_accuracy}")
+# #Evaluate the models
+# log_reg_confusion = confusion_matrix(y_test,log_predict)
+# log_class_report = classification_report(y_test,log_predict)
+# log_accuracy = accuracy_score(y_test,log_predict)
+# print(f" logistic regression confusion matric: {log_reg_confusion}\n classification report: {log_class_report}\n accuracy: {log_accuracy}")
 
-knn_confusion = confusion_matrix(y_test,knn_predict)
-knn_class_report = classification_report(y_test,knn_predict)
-knn_accuracy = accuracy_score(y_test,knn_predict)
-print(f" KNN confusion matrix: {knn_confusion}\n classification report: {knn_class_report}\n accuracy: {knn_accuracy}")
+# knn_confusion = confusion_matrix(y_test,knn_predict)
+# knn_class_report = classification_report(y_test,knn_predict)
+# knn_accuracy = accuracy_score(y_test,knn_predict)
+# print(f" KNN confusion matrix: {knn_confusion}\n classification report: {knn_class_report}\n accuracy: {knn_accuracy}")
 
 
-joblib.dump(log_regg,"models/logistic_regression")
-joblib.dump(knn,"models/knn_classifier")
-joblib.dump(sc,"models/standard_scaler")
-print("Models and scaler saved successfully!")
+# joblib.dump(log_regg,"models/logistic_regression")
+# joblib.dump(knn,"models/knn_classifier")
+# joblib.dump(sc,"models/standard_scaler")
+# print("Models and scaler saved successfully!")
 
+print(df["user_timezone"].value_counts())
